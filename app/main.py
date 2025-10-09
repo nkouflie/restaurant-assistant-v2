@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .db import get_db, create_tables
-from .models import customer, reservations, dietary_restrictions, message
-import logging
+from .models import customers, messages, reservations, dietary_restrictions
+
 
 app = FastAPI(title="Restaurant Assistant API", version="1.0.0")
 
@@ -21,8 +21,8 @@ def health_check():
 
 @app.get("/customers")
 def get_customers(db: Session = Depends(get_db)):
-    customers = db.query(customer.Customer).all()
-    return customers
+    customers_list = db.query(customers.Customer).all()
+    return customers_list
 
 @app.get("/reservations")
 def get_reservations(db: Session = Depends(get_db)):

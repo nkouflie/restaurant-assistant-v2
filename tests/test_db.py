@@ -1,34 +1,86 @@
-from app.db import engine, SessionLocal, Base
-from app.models import customer, dietary_restrictions, reservations
 from datetime import datetime
 
-Base.metadata.create_all(bind=engine)
+import pytest
 
-with SessionLocal() as session:
-    # Clean up any existing test data first
-    session.query(customer.Customer).filter_by(email="john.doe@example.com").delete()
-    session.query(dietary_restrictions.DietaryRestriction).filter_by(name="Vegan").delete()
-    session.commit()
+from app.db import Base, SessionLocal, engine
+from app.models import customers, dietary_restrictions, reservations
 
-    new_customer = customer.Customer(name="John Doe", email="john.doe@example.com", phone_number="555-1234")
-    new_dietary_restriction = dietary_restrictions.DietaryRestriction(name="Vegan")
-    new_reservation = reservations.Reservation(reservation_datetime=datetime.utcnow(), party_size=4, customer=new_customer, created_at=datetime.utcnow())
-    
-    new_reservation.dietary_restrictions.append(new_dietary_restriction)
-    new_customer.dietary_restrictions.append(new_dietary_restriction)
 
-    session.add_all([new_customer, new_dietary_restriction, new_reservation])
-    session.commit()
+@pytest.fixture(scope="function", autouse=True)
+def setup_and_teardown_db():
+    # Create tables before each test
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Drop all tables after each test using CASCADE
+    from sqlalchemy import text
 
-    print("Test data inserted successfully.")
-    customers = session.query(customer.Customer).all()
-    for cust in customers:
-        print(f"Customer: {cust.name}, Dietary Restrictions: {[dr.name for dr in cust.dietary_restrictions]}")
-    reservations_list = session.query(reservations.Reservation).all()
-    for res in reservations_list:
-        print(f"Reservation ID: {res.id}, Customer: {res.customer.name}, Dietary Restrictions: {[dr.name for dr in res.dietary_restrictions]}")
-    dietary_restrictions_list = session.query(dietary_restrictions.DietaryRestriction).all()
-    for dr in dietary_restrictions_list:
-        print(f"Dietary Restriction: {dr.name}, Customers: {[cust.name for cust in dr.customers]}, Reservations: {[res.id for res in dr.reservations]}")
-    
-    session.close()
+    with engine.connect() as conn:
+        conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+
+
+def test_create_customer():
+    with SessionLocal() as session:
+        customer = customers.Customer(
+            name="Alice",
+            email="alice@example.com",
+            phone_number="123",
+            created_at=datetime.utcnow(),
+        )
+        session.add(customer)
+        session.commit()
+        session.refresh(customer)
+        result = (
+            session.query(customers.Customer)
+            .filter_by(email="alice@example.com")
+            .first()
+        )
+        assert result is not None
+        assert result.name == "Alice"
+
+
+def test_create_dietary_restriction():
+    with SessionLocal() as session:
+        dr = dietary_restrictions.DietaryRestriction(name="Vegan")
+        session.add(dr)
+        session.commit()
+        session.refresh(dr)
+        result = (
+            session.query(dietary_restrictions.DietaryRestriction)
+            .filter_by(name="Vegan")
+            .first()
+        )
+        assert result is not None
+        assert result.name == "Vegan"
+
+
+def test_create_reservation_with_customer_and_dietary_restriction():
+    with SessionLocal() as session:
+        customer = customers.Customer(
+            name="Bob",
+            email="bob@example.com",
+            phone_number="456",
+            created_at=datetime.utcnow(),
+        )
+        dr = dietary_restrictions.DietaryRestriction(name="Gluten-Free")
+        reservation = reservations.Reservation(
+            reservation_datetime=datetime.utcnow(),
+            party_size=2,
+            customer=customer,
+            created_at=datetime.utcnow(),
+        )
+        # Set up relationships
+        reservation.dietary_restrictions.append(dr)
+        customer.dietary_restrictions.append(dr)
+        session.add_all([customer, dr, reservation])
+        session.commit()
+        session.refresh(reservation)
+        # Assertions
+        res = (
+            session.query(reservations.Reservation)
+            .filter_by(customer_id=customer.id)
+            .first()
+        )
+        assert res is not None
+        assert res.customer.email == "bob@example.com"
+        assert any(d.name == "Gluten-Free" for d in res.dietary_restrictions)
+        assert any(d.name == "Gluten-Free" for d in customer.dietary_restrictions)
