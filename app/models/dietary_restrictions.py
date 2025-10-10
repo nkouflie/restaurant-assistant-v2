@@ -1,7 +1,12 @@
-from ..db import Base
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
-from .associations import customer_dietary_restrictions, reservation_dietary_restrictions
+
+from ..db import Base
+from .associations import (
+    customer_dietary_restrictions,
+    reservation_dietary_restrictions,
+)
+
 
 class DietaryRestriction(Base):
 
@@ -13,7 +18,13 @@ class DietaryRestriction(Base):
     description = Column(String(250), nullable=True)
 
     # Relationships
-    customers = relationship("Customer", secondary=customer_dietary_restrictions, back_populates="dietary_restrictions")
-    reservations = relationship("Reservation", secondary=reservation_dietary_restrictions, back_populates="dietary_restrictions")
-
-
+    customers = relationship(
+        "Customer",
+        secondary=customer_dietary_restrictions,
+        back_populates="dietary_restrictions",
+    )
+    reservations = relationship(
+        "Reservation",
+        secondary=reservation_dietary_restrictions,
+        back_populates="dietary_restrictions",
+    )

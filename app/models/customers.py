@@ -1,8 +1,11 @@
-from ..db import Base
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
+
+from ..db import Base
 from .associations import customer_dietary_restrictions
+
 
 class Customer(Base):
 
@@ -19,4 +22,8 @@ class Customer(Base):
     # Relationships
     reservations = relationship("Reservation", back_populates="customer")
     messages = relationship("Message", back_populates="customer")
-    dietary_restrictions = relationship("DietaryRestriction", secondary=customer_dietary_restrictions, back_populates="customers")
+    dietary_restrictions = relationship(
+        "DietaryRestriction",
+        secondary=customer_dietary_restrictions,
+        back_populates="customers",
+    )

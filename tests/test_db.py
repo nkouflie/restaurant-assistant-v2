@@ -83,4 +83,6 @@ def test_create_reservation_with_customer_and_dietary_restriction():
         assert res is not None
         assert res.customer.email == "bob@example.com"
         assert any(d.name == "Gluten-Free" for d in res.dietary_restrictions)
-        assert any(d.name == "Gluten-Free" for d in customer.dietary_restrictions)
+        assert any(
+            d.name == "Gluten-Free" for d in customer.dietary_restrictions
+        )
