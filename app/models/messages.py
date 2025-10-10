@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -22,10 +23,20 @@ class Message(Base):
     customer_id = Column(
         Integer, ForeignKey("customers.id"), nullable=False, index=True
     )
+    reservation_id = Column(
+        Integer, ForeignKey("reservations.id"), nullable=False, index=True
+    )
     content = Column(Text, nullable=False)
-    direction = Column(String(10), nullable=False)  # 'inbound' or 'outbound'
+    intent = Column(String(32), nullable=True)
+    confidence = Column(Float, nullable=True)
+    direction = Column(String(10), nullable=False)
     is_read = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     # Relationships
     customer = relationship("Customer", back_populates="messages")
+    reservation = relationship("Reservation", back_populates="messages")
