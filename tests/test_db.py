@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -14,7 +14,7 @@ def setup_and_teardown_db():
     # Drop all tables after each test using CASCADE
     from sqlalchemy import text
 
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
 
 
@@ -24,7 +24,7 @@ def test_create_customer():
             name="Alice",
             email="alice@example.com",
             phone_number="123",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         session.add(customer)
         session.commit()
@@ -59,14 +59,14 @@ def test_create_reservation_with_customer_and_dietary_restriction():
             name="Bob",
             email="bob@example.com",
             phone_number="456",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         dr = dietary_restrictions.DietaryRestriction(name="Gluten-Free")
         reservation = reservations.Reservation(
-            reservation_datetime=datetime.utcnow(),
+            reservation_datetime=datetime.now(timezone.utc),
             party_size=2,
             customer=customer,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         # Set up relationships
         reservation.dietary_restrictions.append(dr)
