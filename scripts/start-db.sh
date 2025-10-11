@@ -1,26 +1,26 @@
-#!/bin/bash
-# Simple script to start just the database
+#!/usr/bin/env bash
+# Start only the PostgreSQL service for local development.
 
-set -e
+set -euo pipefail
 
-echo "🐘 Starting PostgreSQL database..."
+echo "🐘 Starting PostgreSQL container..."
+docker compose up -d db
 
-# Start database
-docker-compose up -d db
-
-# Wait for database to be ready
 echo "⏳ Waiting for database to be ready..."
 sleep 5
 
-# Test connection
 echo "🔍 Testing database connection..."
-if python -c "from app.db import create_tables; create_tables(); print('✅ Database is ready!')" 2>/dev/null; then
-    echo "✅ Database is ready and accessible!"
+if venv/bin/python - <<'PY' >/dev/null
+from app.db import create_tables
+create_tables()
+print("ok")
+PY
+then
+    echo "✅ Database is ready and accessible at localhost:5432."
 else
-    echo "❌ Database connection failed!"
-    echo "Make sure your .env file has the correct DATABASE_URL"
+    echo "❌ Database connection failed."
+    echo "   Check DATABASE_URL in .env and confirm docker compose is running."
     exit 1
 fi
 
-echo "🚀 Database is running on localhost:5432"
-echo "📊 You can now start your FastAPI server"
+echo "🚀 You can now run the API server (venv/bin/uvicorn app.main:app --reload)"

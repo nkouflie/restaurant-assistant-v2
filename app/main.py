@@ -73,7 +73,7 @@ def get_reservations(db: Session = Depends(get_db)):
     return reservations_list
 
 
-@app.post("/receive", tags=["Messages"])
+@app.post("/messages/receive", tags=["Messages"])
 def receive_message(
     to_number: str = Form(...),
     from_number: str = Form(...),

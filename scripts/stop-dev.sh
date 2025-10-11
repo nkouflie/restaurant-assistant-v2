@@ -1,14 +1,9 @@
-#!/bin/bash
-# Script to stop the development environment
+#!/usr/bin/env bash
+# Stop running development services.
 
-set -e
+set -euo pipefail
 
-echo "🛑 Stopping Restaurant Assistant Development Environment..."
-
-# Stop all Docker containers
-echo "🐳 Stopping Docker containers..."
-docker-compose down
-
-echo "✅ Development environment stopped!"
-echo ""
-echo "To start again, run: ./scripts/dev.sh"
+echo "🛑 Stopping Restaurant Assistant services..."
+docker compose down
+echo "✅ Containers stopped."
+echo "   Restart anytime with: ./scripts/dev.sh"

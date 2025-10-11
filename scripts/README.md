@@ -13,12 +13,11 @@ Complete development environment setup with all checks.
 
 **What it does:**
 - ✅ Checks for `.env` file
-- ✅ Activates virtual environment
-- ✅ Installs/updates dependencies
-- ✅ Starts PostgreSQL database
+- ✅ Ensures virtual environment + installs dependencies
+- ✅ Starts PostgreSQL via Docker Compose
 - ✅ Tests database connection
-- ✅ Runs code quality checks (Black, isort, flake8)
-- ✅ Runs test suite
+- ✅ Runs Ruff (lint + format) via `pre-commit`
+- ✅ Runs the pytest suite
 - ✅ Provides helpful next steps
 
 ### `start-db.sh` - Database Only
@@ -70,6 +69,6 @@ chmod +x scripts/*.sh
 ### Docker Issues
 If Docker containers fail to start:
 ```bash
-docker-compose down
-docker-compose up -d db
+docker compose down
+docker compose up -d db
 ```
