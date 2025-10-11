@@ -4,11 +4,9 @@ from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
 
 from ..db import Base
-from .associations import customer_dietary_restrictions
 
 
 class Customer(Base):
-
     __tablename__ = "customers"
 
     # Column definitions
@@ -16,6 +14,7 @@ class Customer(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False, index=True)
     phone_number = Column(String(20), unique=True, nullable=False, index=True)
+    notes = Column(String(250), nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -30,8 +29,3 @@ class Customer(Base):
     # Relationships
     reservations = relationship("Reservation", back_populates="customer")
     messages = relationship("Message", back_populates="customer")
-    dietary_restrictions = relationship(
-        "DietaryRestriction",
-        secondary=customer_dietary_restrictions,
-        back_populates="customers",
-    )

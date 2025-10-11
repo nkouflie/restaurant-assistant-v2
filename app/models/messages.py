@@ -1,15 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-)
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from ..db import Base
@@ -27,10 +18,7 @@ class Message(Base):
         Integer, ForeignKey("reservations.id"), nullable=False, index=True
     )
     content = Column(Text, nullable=False)
-    intent = Column(String(32), nullable=True)
-    confidence = Column(Float, nullable=True)
     direction = Column(String(10), nullable=False)
-    is_read = Column(Boolean, default=False)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

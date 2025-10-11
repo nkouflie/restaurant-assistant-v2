@@ -7,33 +7,35 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    event,
 )
 from sqlalchemy.orm import relationship, validates
 
 from ..db import Base
-from .associations import reservation_dietary_restrictions
 
 
 class Reservation(Base):
-
     __tablename__ = "reservations"
 
-    STATUSES = {"pending", "completed", "needs_review"}
+    STATUSES = {"pending", "confirmed", "cancelled", "needs_review"}
 
     # Column definitions
     id = Column(Integer, primary_key=True, autoincrement=True)
+    customer_id = Column(
+        Integer, ForeignKey("customers.id"), nullable=False, index=True
+    )
     reservation_datetime = Column(
         DateTime(timezone=True), nullable=False, index=True
     )
     party_size = Column(Integer, nullable=False)
-    customer_id = Column(
-        Integer, ForeignKey("customers.id"), nullable=False, index=True
-    )
-    occasion = Column(String(250), nullable=True)
     status = Column(
-        String(32), default="pending", server_default="pending", nullable=False
+        String(32),
+        default="pending",
+        server_default="pending",
+        nullable=False,
     )
-    allergy_summary = Column(String(250), nullable=True)
+    customer_allergy_notes = Column(String(250), nullable=True)
+    reservation_notes = Column(String(250), nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -47,11 +49,6 @@ class Reservation(Base):
 
     # Relationships
     customer = relationship("Customer", back_populates="reservations")
-    dietary_restrictions = relationship(
-        "DietaryRestriction",
-        secondary=reservation_dietary_restrictions,
-        back_populates="reservations",
-    )
     messages = relationship("Message", back_populates="reservation")
 
     @validates("status")
@@ -63,7 +60,17 @@ class Reservation(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('pending', 'completed', 'needs_review')",
+            "status IN ('pending', 'confirmed', 'cancelled', 'needs_review')",
             name="ck_reservation_status",
         ),
     )
+
+
+@event.listens_for(Reservation, "before_insert")
+def populate_customer_allergy_notes(mapper, connection, target):
+    """Cache customer allergy notes onto the reservation if not provided."""
+    if target.customer_allergy_notes:
+        return
+    customer = getattr(target, "customer", None)
+    if customer and customer.notes:
+        target.customer_allergy_notes = customer.notes

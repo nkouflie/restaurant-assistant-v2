@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .db import create_tables, get_db
-from .models import customers, reservations
+from .models import customers, messages, reservations
 
 
 @asynccontextmanager
@@ -71,3 +71,48 @@ def get_reservations(db: Session = Depends(get_db)):
     """Get all reservations."""
     reservations_list = db.query(reservations.Reservation).all()
     return reservations_list
+
+
+@app.post("/receive", tags=["Messages"])
+def receive_message(
+    to_number: str = Form(...),
+    from_number: str = Form(...),
+    body: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    """Receive a message"""
+
+    # Search for the customer by phone number
+    customer = (
+        db.query(customers.Customer)
+        .filter_by(phone_number=from_number)
+        .first()
+    )
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Find the most recent active reservation for the customer
+    reservation = (
+        db.query(reservations.Reservation)
+        .filter_by(customer_id=customer.id)
+        .filter(reservations.Reservation.status.in_(["pending", "confirmed"]))
+        .order_by(reservations.Reservation.reservation_datetime.desc())
+        .first()
+    )
+    if not reservation:
+        raise HTTPException(
+            status_code=404, detail="No active reservation found for customer"
+        )
+
+    # Log the incoming message
+    message = messages.Message(
+        customer=customer,
+        reservation=reservation,
+        content=body,
+        direction="inbound",
+    )
+    db.add(message)
+    reservation.status = "needs_review"
+    db.commit()
+
+    return {"message": "Message received"}

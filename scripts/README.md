@@ -44,6 +44,7 @@ Stop all development services.
 - ✅ Stops all Docker containers
 - ✅ Cleans up development environment
 
+
 ## Usage Examples
 
 ### First Time Setup
@@ -52,27 +53,12 @@ Stop all development services.
 ./scripts/dev.sh
 ```
 
-### Daily Development
-```bash
-# Start just the database
-./scripts/start-db.sh
-
-# Then start your FastAPI server in Cursor
-# Or run: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### Cleanup
-```bash
-# Stop everything
-./scripts/stop-dev.sh
-```
-
 ## Troubleshooting
 
 ### Database Connection Issues
 Make sure your `.env` file has the correct `DATABASE_URL` (replace `<password>` with your actual password):
 ```
-DATABASE_URL=postgresql://postgres:{$POSTGRES_PASSWORD}@localhost:5432/restaurant-db
+DATABASE_URL=postgresql://postgres:<password>@localhost:5432/restaurant-db
 ```
 
 ### Permission Issues
