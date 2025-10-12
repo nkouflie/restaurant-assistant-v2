@@ -28,3 +28,6 @@ __pycache__/
 
 # Git
 .pre-commit-config.yaml
+
+# Scripts
+scripts/
